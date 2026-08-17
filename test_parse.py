@@ -1,5 +1,6 @@
-from ultralytics.nn.tasks import yaml_model_load, parse_model
 import torch
+
+from ultralytics.nn.tasks import parse_model, yaml_model_load
 
 cfg = yaml_model_load("./v8/my_yolov8n.yaml")
 model, save = parse_model(cfg, ch=3)
@@ -11,8 +12,9 @@ for i, layer in enumerate(model):
         in_c = layer.cv1.conv.in_channels
         dummy_input = torch.randn(2, in_c, 80, 80)
         output = layer(dummy_input)
-        print(f"C2f层{i}: 输入{dummy_input.shape} → cv1输出{[2, layer.cv1.conv.out_channels, 80, 80]} → 最终输出{output.shape}")
-
+        print(
+            f"C2f层{i}: 输入{dummy_input.shape} → cv1输出{[2, layer.cv1.conv.out_channels, 80, 80]} → 最终输出{output.shape}"
+        )
 
 
 # 先缓存所有有输出通道的层的通道数
@@ -46,8 +48,6 @@ for i, layer in enumerate(model):
                 break
         if valid:
             print(f"第{i}层（Concat）输入来自层{in_layers}，输出通道: {concat_out_c}")
-
-
 
 
 # 先缓存所有层的输出通道
