@@ -2073,3 +2073,81 @@ class RealNVP(nn.Module):
             self.float()
         z, log_det = self.backward_p(x)
         return self.prior.log_prob(z) + log_det
+
+
+
+
+# ========== 你加的代码开始 ==========
+
+# ========== 你加的代码（修正版） ==========
+
+# ========== 你的自定义模块（追加在官方原版之后） ==========
+
+class ChannelAttention(nn.Module):
+    """通道注意力（SE 双路改进）"""
+    def __init__(self, c, reduction=16):
+        super().__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
+        self.fc = nn.Sequential(
+            nn.Conv2d(c, c // reduction, 1, bias=False),
+            nn.ReLU(),
+            nn.Conv2d(c // reduction, c, 1, bias=False)
+        )
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        return self.sigmoid(self.fc(self.avg_pool(x)) + self.fc(self.max_pool(x)))
+
+
+class BottleneckWithCBAM(nn.Module):
+    """带通道注意力的 Bottleneck（接口和官方 Bottleneck 一致）"""
+    def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3)):
+        super().__init__()
+        self.cv1 = Conv(c1, c2, k[0])
+        self.cv2 = Conv(c2, c2, k[1])
+        self.ca = ChannelAttention(c2)
+        self.add = shortcut and c1 == c2
+
+    def forward(self, x):
+        out = self.cv2(self.cv1(x))
+        out = out * self.ca(out)
+        if self.add:
+            out = out + x
+        return out
+
+
+# ========== 替换你原来的 C2fWithCBAM ==========
+
+class C2fWithCBAM(nn.Module):  # 直接继承 nn.Module，不继承 C2f
+    """C2f with Bottleneck replaced by BottleneckWithCBAM."""
+
+    def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = False, g: int = 1, e: float = 0.5):
+        super().__init__()
+        self.c = int(c2 * e)  # hidden channels —— 自己算，不用 super
+        self.cv1 = Conv(c1, 2 * self.c, 1, 1)
+        self.cv2 = Conv((2 + n) * self.c, c2, 1)  # 自己算，参数绝对正确
+        # 只换 Bottleneck，其他完全照抄官方 C2f
+        self.m = nn.ModuleList(
+            BottleneckWithCBAM(self.c, self.c, shortcut, g, k=(3, 3)) for _ in range(n)
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass through C2fWithCBAM layer."""
+        y = list(self.cv1(x).chunk(2, 1))
+        y.extend(m(y[-1]) for m in self.m)
+        return self.cv2(torch.cat(y, 1))
+
+    def forward_split(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass using split() instead of chunk()."""
+        y = self.cv1(x).split((self.c, self.c), 1)
+        y = [y[0], y[1]]
+        y.extend(m(y[-1]) for m in self.m)
+        return self.cv2(torch.cat(y, 1))
+
+# ========== 结束 ==========
+
+# ========== 结束 ==========
+# ========== 结束 ==========
+
+# ========== 你加的代码结束 ==========

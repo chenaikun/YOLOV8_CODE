@@ -11,7 +11,7 @@ from pathlib import Path
 
 import torch
 from torch import nn
-
+from ultralytics.nn.modules.block import C2f, C2fWithCBAM
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules import (
     AIFI,
@@ -1973,6 +1973,7 @@ def parse_model(d, ch, verbose=True):
     base_modules = frozenset(
         {
             Classify,
+            C2fWithCBAM,
             Conv,
             ConvTranspose,
             GhostConv,
