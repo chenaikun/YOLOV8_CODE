@@ -1,8 +1,4 @@
-from ultralytics.nn.tasks import yaml_model_load, parse_model
-import torch
-import torch.nn as nn
-
-from ultralytics.nn.tasks import yaml_model_load, parse_model
+from ultralytics.nn.tasks import parse_model, yaml_model_load
 from ultralytics.utils.torch_utils import model_info
 
 # 加载带注意力的配置
@@ -134,7 +130,6 @@ for i, layer in enumerate(model):
 # print(f"\nCBAM最终输出: {output.shape} ✅")
 
 
-
 # print(f"官方Bottleneck输出: {out1.shape}")
 # print(f"加SE的Bottleneck输出: {out2.shape} ✅ 完全一致！")
 
@@ -155,7 +150,6 @@ for i, layer in enumerate(model):
 #         dummy_input = torch.randn(2, in_c, 80, 80)
 #         output = layer(dummy_input)
 #         print(f"C2f层{i}: 输入{dummy_input.shape} → cv1输出{[2, layer.cv1.conv.out_channels, 80, 80]} → 最终输出{output.shape}")
-
 
 
 # # 先缓存所有有输出通道的层的通道数
@@ -189,8 +183,6 @@ for i, layer in enumerate(model):
 #                 break
 #         if valid:
 #             print(f"第{i}层（Concat）输入来自层{in_layers}，输出通道: {concat_out_c}")
-
-
 
 
 # # 先缓存所有层的输出通道
