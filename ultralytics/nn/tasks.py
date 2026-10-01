@@ -11,7 +11,7 @@ from pathlib import Path
 
 import torch
 from torch import nn
-from ultralytics.nn.modules.block import C2f, C2fWithCBAM
+
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules import (
     AIFI,
@@ -77,6 +77,7 @@ from ultralytics.nn.modules import (
     YOLOESegment26,
     v10Detect,
 )
+from ultralytics.nn.modules.block import C2f, C2fWithCBAM
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
     LOGGER,
